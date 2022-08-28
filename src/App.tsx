@@ -1,24 +1,26 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import "./App.css";
+import { Card } from "./components/Card";
+import { useBusState } from "./StateBus";
 
 function App() {
+  const [root, publish] = useBusState("root", "");
+  const handleClick = () => {
+    publish((channel: Record<string, any>) => {
+      Object.keys(channel).forEach((key) => {
+        if (channel[key].state === true) {
+          channel[key].setState(false);
+        }
+      });
+    }, "cards");
+  };
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Card />
+      <Card />
+      <Card />
+      <Card />
+      <button onClick={handleClick}>Erase</button>
     </div>
   );
 }
