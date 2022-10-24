@@ -1,12 +1,12 @@
 import React from "react";
 import "./App.css";
 import { Card } from "./components/Card";
-import { useBusState } from "./StateBus";
+import { TAtom, useBusState } from "./StateBus";
 
 function App() {
   const [root, publish] = useBusState("root", "");
   const handleClick = () => {
-    publish((channel: Record<string, any>) => {
+    publish((channel: Record<string, TAtom<boolean>>) => {
       Object.keys(channel).forEach((key) => {
         if (channel[key].state === true) {
           channel[key].setState(false);

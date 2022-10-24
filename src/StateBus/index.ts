@@ -1,44 +1,49 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { v4 } from "uuid";
 
+export type TAtom<T> = {
+  state: T,
+  setState: React.Dispatch<React.SetStateAction<T>>
+}
+
 const bus = {
-  channels: {} as Record<string, any>,
-  subscribe: function (
+  channels: {} as Record<string, TAtom<any>>,
+  subscribe: function<T> (
     channelName: string,
-    state: any,
-    callback: Function,
+    state: T,
+    callback: React.Dispatch<React.SetStateAction<T>>,
     key: string
   ) {
     if (!this.channels[channelName]) {
-      this.channels[channelName] = {};
+      this.channels[channelName] = {} as TAtom<T>;
     }
-    this.channels[channelName][key] = {
+    this.channels[channelName][key as keyof TAtom<T>] = {
       state,
-      setState: (nextState: any) => {
+      setState: (nextState: T) => {
         callback(nextState);
-        this.channels[channelName][key].state = nextState;
+        this.channels[channelName][key as keyof TAtom<T>].state = nextState;
       },
     };
   },
-  unsubscribe: function (key: string) {
+  unsubscribe: function<T> (key: string) {
     Object.keys(this.channels).forEach((channel: string) => {
-      if (this.channels[channel][key]) {
-        delete this.channels[channel][key];
+      if (this.channels[channel][key as keyof TAtom<T>]) {
+        delete this.channels[channel][key as keyof TAtom<T>];
       }
     });
   },
   // Changes state for subscribers escape issuer
-  publish: function (callback: Function, issuer: string, channelName: string) {
-    const source = Object.assign({}, this.channels[channelName]);
-    delete source[issuer];
+  publish: function<T> (callback: Function, issuer: string, channelName: string) {
+    const source = Object.assign({} as TAtom<T>, this.channels[channelName]);
+    delete source[issuer as keyof TAtom<T>];
     callback(source);
   },
   // Gets state and callback for subscriber
-  atom: function (key: string): Record<string, any> {
-    let atom: Record<string, any> = {};
+  atom: function<T> (key: string): TAtom<T> {
+    let atom = {} as TAtom<T>;
     Object.keys(this.channels).forEach((channel: string) => {
-      if (this.channels[channel][key]) {
-        atom = this.channels[channel][key];
+      if (this.channels[channel][key as keyof TAtom<T>]) {
+        atom = this.channels[channel][key as keyof TAtom<T>];
       }
     });
     const setState = (nextState: any) => {
@@ -54,10 +59,10 @@ export const useBusState = <T>(
   state: T,
   key: string = v4()
 ): [
-  T,
-  (callback: Function, channel: string) => void,
-  () => Record<string, any>
-] => {
+    T,
+    (callback: Function, channel: string) => void,
+    () => TAtom<unknown>
+  ] => {
   const [value, setState] = useState<T>(state);
   const [subscriber] = useState<string>(key);
   useEffect(() => {
